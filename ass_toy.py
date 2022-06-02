@@ -23,7 +23,7 @@ def main():
     parser.add_argument('--train_with', type=str, default="dsm", choices=['dsm', 'sm', 'ssm'])
     parser.add_argument('--anneal_pattern', type=str, default="anneal", choices=['anneal', 'no_anneal'])
 
-    parser.add_argument('--viz_freq', type=int, default=500)
+    parser.add_argument('--viz_freq', type=int, default=1000)
     parser.add_argument('--viz_batchsize', type=int, default=50000)
     parser.add_argument('--D_iters', type=int, default=5)
     parser.add_argument('--mc_steps', type=int, default=5)
@@ -36,12 +36,12 @@ def main():
 
     layers = []
     for i in range(1):
-        layers.append(DenseNet([2, 256,256,256, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        layers.append(DenseNet([2, 128,128,128, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     G = nn.Sequential(*layers).cuda()
 
     Dlayers = []
     for i in range(1):
-        Dlayers.append(DenseNet([2,256,256,256,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        Dlayers.append(DenseNet([2,128,128,128,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     D = nn.Sequential(*Dlayers).cuda()
 
 
@@ -66,7 +66,7 @@ def main():
     training_with = args.train_with # options = ['dsm', 'sm', 'ssm']
     anneal_pattern = args.anneal_pattern # options = ['anneal', 'non-anneal']
 
-    for iter in range(args.niters):
+    for iiter in range(args.niters):
         Goptim.zero_grad()
         Doptim.zero_grad()
         for _ in range(args.D_iters):
@@ -130,8 +130,8 @@ def main():
         model_score = torch.autograd.grad(D(x).sum(), x, create_graph=True)[0]
         
         if anneal_pattern == 'anneal':
-          if iter<(args.niters - 2000):
-            lam = (end_lam - start_lam)/(args.niters - 2000) + start_lam
+          if iiter< (args.niters - int(args.niters/2)):
+            lam = (end_lam - start_lam)/(args.niters - int(args.niters/2)) + start_lam
           else:
             lam = 1.0
         else:
@@ -143,57 +143,79 @@ def main():
         g_loss.backward()
         Goptim.step()  
 
-        if iter%args.viz_freq == 0:
+        if iiter%args.viz_freq == 0:
           x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
           plt.figure(figsize=(5, 5))
-          plt.title('iter: {}'.format(iter))
+          plt.title('iter: {}'.format(iiter))
           plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
           plt.xlim(-3, 3)
           plt.ylim(-3, 3)
-          plt.savefig(os.path.join(args.save, 'samples_{}.png'.format(iter)))
+          plt.savefig(os.path.join(args.save, 'samples_{}.png'.format(iiter)))
 
-          print("iter: {}, gloss: {}, dloss: {}, score_diff: {}".format(iter, g_loss.item(), d_loss.item(), (fake_images+D(fake_images)).square().sum(-1).sqrt().mean()))
+          print("iter: {}, gloss: {}, dloss: {}, score_diff: {}".format(iiter, g_loss.item(), d_loss.item(), (fake_images+D(fake_images)).square().sum(-1).sqrt().mean()))
           plt.clf()
+          plt.close()
 
         glosses.append(g_loss.item())
       
     plt.plot(dlosses[:])
     plt.savefig(os.path.join(args.save, 'dloss.png'))
     plt.clf()
+    plt.close()
 
     plt.plot(glosses[:])
     plt.savefig(os.path.join(args.save, 'gloss.png'))
     plt.clf()
+    plt.close()
 
     x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iter))
+    plt.title('iter: {}'.format(iiter))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'samples_no_mc.png'))
     plt.clf()
+    plt.close()
 
     mc_sampler = HMCSampler(f=energy_fun,s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
     x = mc_sampler.sample(torch.from_numpy(x).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iter))
+    plt.title('iter: {}'.format(iiter))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'samples_with_mc.png'))
     plt.clf()
+    plt.close()
 
-    x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), 10).cpu().numpy()
+    x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iter))
+    plt.title('iter: {}'.format(iiter))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'hmc_sample.png'))
     plt.clf()
+    plt.close()
+
+    if args.target == 'gauss2':
+        x = torch.randn(args.viz_batchsize,2)
+        x[:int(args.viz_batchsize/2)] = x[:int(args.viz_batchsize/2)]-1
+        x[int(args.viz_batchsize/2):] = x[int(args.viz_batchsize/2):]+1
+        x = x.cpu().numpy()
+
+        plt.figure(figsize=(5, 5))
+        plt.title('iter: {}'.format(iiter))
+        plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+        plt.xlim(-3, 3)
+        plt.ylim(-3, 3)
+        plt.savefig(os.path.join(args.save, 'real_sample.png'))
+        plt.clf()
+        plt.close()
+
 
 if __name__ == "__main__":
     main()
