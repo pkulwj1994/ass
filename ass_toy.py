@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 from utils import DenseNet, HMCSampler
-from energy_lib import energy_2gauss, score_2gauss_anneal
+from energy_lib import energy_2gauss, score_2gauss_anneal, energy_u1, score_u1_anneal, energy_u2, score_u2_anneal, energy_u3, score_u3_anneal, energy_u4, score_u4_anneal
 import matplotlib.pyplot as plt
 import argparse
 import os
@@ -46,8 +46,23 @@ def main():
 
 
     dim = 2
-    energy_fun = energy_2gauss
-    score_fun = score_2gauss_anneal
+
+    if args.target == 'gauss2':
+      energy_fun = energy_2gauss
+      score_fun = score_2gauss_anneal
+    elif args.target == 'u1':
+      energy_fun = energy_u1
+      score_fun = score_u1_anneal
+    elif args.target == 'u2':
+      energy_fun = energy_u2
+      score_fun = score_u2_anneal
+    elif args.target == 'u3':
+      energy_fun = energy_u3
+      score_fun = score_u3_anneal
+    elif args.target == 'u4':
+      energy_fun = energy_u4
+      score_fun = score_u4_anneal
+
     prior = torch.distributions.Normal(loc=torch.zeros(dim), scale=1.0)
 
 
