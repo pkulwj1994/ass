@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from traitlets.traitlets import ForwardDeclaredInstance
+import math
 
 
 # definition of target distributions and score functions
@@ -25,3 +25,50 @@ def energy_2gauss_anneal(x,lam):
 
 def score_2gauss_anneal(x, lam=1):
   return lam*score_2gauss(x) + (1-lam)*score_gauss(x)
+
+
+
+## u1-u4 energies
+
+def potential_fn(dataset):
+    # NF paper table 1 energy functions
+    w1 = lambda z: torch.sin(2 * math.pi * z[:,0] / 4)
+    w2 = lambda z: 3 * torch.exp(-0.5 * ((z[:,0] - 1)/0.6)**2)
+    w3 = lambda z: 3 * torch.sigmoid((z[:,0] - 1) / 0.3)
+
+    if dataset == 'u1':
+        return lambda z: 0.5 * ((torch.norm(z, p=2, dim=1) - 2) / 0.4)**2 - \
+                                torch.log(torch.exp(-0.5*((z[:,0] - 2) / 0.6)**2) + \
+                                          torch.exp(-0.5*((z[:,0] + 2) / 0.6)**2) + 1e-10)
+
+    elif dataset == 'u2':
+        return lambda z: 0.5 * ((z[:,1] - w1(z)) / 0.4)**2
+
+    elif dataset == 'u3':
+        return lambda z: - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.35)**2) + \
+                                     torch.exp(-0.5*((z[:,1] - w1(z) + w2(z))/0.35)**2) + 1e-10)
+
+    elif dataset == 'u4':
+        return lambda z: - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.4)**2) + \
+                                     torch.exp(-0.5*((z[:,1] - w1(z) + w3(z))/0.35)**2) + 1e-10)
+
+    else:
+        raise RuntimeError('Invalid potential name to sample from.')
+
+
+
+w1 = lambda z: torch.sin(2 * math.pi * z[:,0] / 4)
+w2 = lambda z: 3 * torch.exp(-0.5 * ((z[:,0] - 1)/0.6)**2)
+w3 = lambda z: 3 * torch.sigmoid((z[:,0] - 1) / 0.3)
+def energy_u1(z):
+    return 0.5 * ((torch.norm(z, p=2, dim=1) - 2) / 0.4)**2 - torch.log(torch.exp(-0.5*((z[:,0] - 2) / 0.6)**2) + torch.exp(-0.5*((z[:,0] + 2) / 0.6)**2) + 1e-10)
+
+def energy_u2(z):
+    return 0.5 * ((z[:,1] - w1(z)) / 0.4)**2
+
+def energy_u3(z):
+    return - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.35)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w2(z))/0.35)**2) + 1e-10)
+
+def energy_u4(z):
+    return - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.4)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w3(z))/0.35)**2) + 1e-10)
+
