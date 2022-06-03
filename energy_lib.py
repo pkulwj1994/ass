@@ -61,14 +61,48 @@ w1 = lambda z: torch.sin(2 * math.pi * z[:,0] / 4)
 w2 = lambda z: 3 * torch.exp(-0.5 * ((z[:,0] - 1)/0.6)**2)
 w3 = lambda z: 3 * torch.sigmoid((z[:,0] - 1) / 0.3)
 def energy_u1(z):
-    return 0.5 * ((torch.norm(z, p=2, dim=1) - 2) / 0.4)**2 - torch.log(torch.exp(-0.5*((z[:,0] - 2) / 0.6)**2) + torch.exp(-0.5*((z[:,0] + 2) / 0.6)**2) + 1e-10)
+    e = 0.5 * ((torch.norm(z, p=2, dim=1) - 2) / 0.4)**2 - torch.log(torch.exp(-0.5*((z[:,0] - 2) / 0.6)**2) + torch.exp(-0.5*((z[:,0] + 2) / 0.6)**2) + 1e-10)
+    return -e
 
 def energy_u2(z):
-    return 0.5 * ((z[:,1] - w1(z)) / 0.4)**2
+    e = 0.5 * ((z[:,1] - w1(z)) / 0.4)**2
+    return -e 
 
 def energy_u3(z):
-    return - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.35)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w2(z))/0.35)**2) + 1e-10)
+    e = - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.35)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w2(z))/0.35)**2) + 1e-10)
+    return -e
 
 def energy_u4(z):
-    return - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.4)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w3(z))/0.35)**2) + 1e-10)
+    e = - torch.log(torch.exp(-0.5*((z[:,1] - w1(z))/0.4)**2) + torch.exp(-0.5*((z[:,1] - w1(z) + w3(z))/0.35)**2) + 1e-10)
+    return -e
+
+def score_u1(x):
+  x.requires_grad_(True)
+  return torch.autograd.grad(energy_u1(x).sum(), x, create_graph=True)[0]
+
+def score_u2(x):
+  x.requires_grad_(True)
+  return torch.autograd.grad(energy_u2(x).sum(), x, create_graph=True)[0]
+
+def score_u3(x):
+  x.requires_grad_(True)
+  return torch.autograd.grad(energy_u3(x).sum(), x, create_graph=True)[0]
+
+def score_u4(x):
+  x.requires_grad_(True)
+  return torch.autograd.grad(energy_u4(x).sum(), x, create_graph=True)[0]
+
+
+def score_u1_anneal(x, lam=1.0):
+  return lam*score_u1(x) + (1-lam)*score_gauss(x)
+
+def score_u2_anneal(x, lam=1.0):
+  return lam*score_u2(x) + (1-lam)*score_gauss(x)
+
+def score_u3_anneal(x, lam=1.0):
+  return lam*score_u3(x) + (1-lam)*score_gauss(x)
+
+def score_u4_anneal(x, lam=1.0):
+  return lam*score_u4(x) + (1-lam)*score_gauss(x)
+
 
