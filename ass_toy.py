@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
-from utils import DenseNet, HMCSampler
+from utils import DenseNet, HMCSampler, MMD
 from energy_lib import energy_2gauss, score_2gauss_anneal, energy_u1, score_u1_anneal, energy_u2, score_u2_anneal, energy_u3, score_u3_anneal, energy_u4, score_u4_anneal
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -183,6 +183,35 @@ def main():
     plt.clf()
     plt.close()
 
+    # if args.target == 'gauss2':
+    #     x = torch.randn(args.viz_batchsize,2)
+    #     x[:int(args.viz_batchsize/2)] = x[:int(args.viz_batchsize/2)]-1
+    #     x[int(args.viz_batchsize/2):] = x[int(args.viz_batchsize/2):]+1
+    #     x = x.cpu().numpy()
+
+    #     x_gt = torch.from_numpy(x)
+
+    #     plt.figure(figsize=(5, 5))
+    #     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
+    #     plt.xlim(-3, 3)
+    #     plt.ylim(-3, 3)
+    #     plt.savefig(os.path.join(args.save, 'real_sample.png'))
+    #     plt.clf()
+    #     plt.close()
+
+    mc_sampler = HMCSampler(f=energy_fun,s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
+
+    x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), 100).cpu().numpy()
+    x_hmc = torch.from_numpy(x)
+
+    plt.figure(figsize=(5, 5))
+    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
+    plt.xlim(-3, 3)
+    plt.ylim(-3, 3)
+    plt.savefig(os.path.join(args.save, 'hmc_sample.png'))
+    plt.clf()
+    plt.close()
+
     x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
     plt.figure(figsize=(5, 5))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
@@ -192,7 +221,8 @@ def main():
     plt.clf()
     plt.close()
 
-    mc_sampler = HMCSampler(f=energy_fun,s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
+    print('hmc-ass: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
+
     x = mc_sampler.sample(torch.from_numpy(x).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
@@ -203,30 +233,13 @@ def main():
     plt.clf()
     plt.close()
 
-    x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), args.mc_steps).cpu().numpy()
+    print('hmc-assmc: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
 
-    plt.figure(figsize=(5, 5))
-    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
-    plt.xlim(-3, 3)
-    plt.ylim(-3, 3)
-    plt.savefig(os.path.join(args.save, 'hmc_sample.png'))
-    plt.clf()
-    plt.close()
 
-    if args.target == 'gauss2':
-        x = torch.randn(args.viz_batchsize,2)
-        x[:int(args.viz_batchsize/2)] = x[:int(args.viz_batchsize/2)]-1
-        x[int(args.viz_batchsize/2):] = x[int(args.viz_batchsize/2):]+1
-        x = x.cpu().numpy()
-
-        plt.figure(figsize=(5, 5))
-        plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
-        plt.xlim(-3, 3)
-        plt.ylim(-3, 3)
-        plt.savefig(os.path.join(args.save, 'real_sample.png'))
-        plt.clf()
-        plt.close()
-
+    # try:
+    #   print('gt-hmc mmd: {}, gt-ass mmd: {}, gt-ass_mc: {}, hmc-ass: {}, hmc-ass_mc: {}'.format(MMD(x_gt,x_hmc), MMD(x_gt, x_no_mc), MMD(x,x_mc), MMD(x_hmc, x_no_mc), MMD(x_hmc, x_mc)))
+    # except:
+    #   print('hmc-ass: {}, hmc-ass_mc: {}'.format(MMD(x_hmc, x_no_mc), MMD(x_hmc, x_mc)))
 
 if __name__ == "__main__":
     main()
