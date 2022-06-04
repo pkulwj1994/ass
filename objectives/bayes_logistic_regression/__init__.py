@@ -1,7 +1,5 @@
 import numpy as np
-import tensorflow as tf
 from objectives import Energy
-
 import torch
 
 
@@ -21,36 +19,31 @@ class BayesianLogisticRegression(Energy):
         self.x_dim = data.shape[1]
         self.y_dim = labels.shape[1]
         self.dim = self.x_dim * self.y_dim + self.y_dim
-        # self.mu_prior = tf.ones([self.dim]) * loc
-        # self.sig_prior = tf.ones([self.dim]) * scale
+
         self.mu_prior = torch.ones([self.dim]) * loc
         self.sig_prior = torch.ones([self.dim]) * scale
 
-        # self.data = tf.constant(data, tf.float32)
-        # self.labels = tf.constant(labels, tf.float32)
-        # self.z = tf.placeholder(tf.float32, [batch_size, self.dim])
 
         self.data = torch.from_numpy(data)
         self.labels = torch.from_numpy(labels)
-        # self.z = tf.placeholder(tf.float32, [batch_size, self.dim])
 
         if batch_size:
-            self.data = tf.tile(
-                tf.reshape(self.data, [1, -1, self.x_dim]),
-                tf.stack([batch_size, 1, 1])
+            self.data = torch.tile(
+                torch.reshape(self.data, [1, -1, self.x_dim]),
+                torch.stack([batch_size, 1, 1])
             )
-            self.labels = tf.tile(
-                tf.reshape(self.labels, [1, -1, self.y_dim]),
-                tf.stack([batch_size, 1, 1])
+            self.labels = torch.tile(
+                torch.reshape(self.labels, [1, -1, self.y_dim]),
+                torch.stack([batch_size, 1, 1])
             )
         else:
-            self.data = tf.tile(
-                tf.reshape(self.data, [1, -1, self.x_dim]),
-                tf.stack([tf.shape(self.z)[0], 1, 1])
+            self.data = torch.tile(
+                torch.reshape(self.data, [1, -1, self.x_dim]),
+                torch.stack([torch.shape(self.z)[0], 1, 1])
             )
             self.labels = tf.tile(
-                tf.reshape(self.labels, [1, -1, self.y_dim]),
-                tf.stack([tf.shape(self.z)[0], 1, 1])
+                torch.reshape(self.labels, [1, -1, self.y_dim]),
+                torch.stack([torch.shape(self.z)[0], 1, 1])
             )
 
     def _vector_to_model(self, v):
@@ -63,10 +56,10 @@ class BayesianLogisticRegression(Energy):
     def energy_fn(self, v, x, y):
         w, b = self._vector_to_model(v)
         logits = tf.matmul(x, w) + b
-        ll = torch.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=logits)
-        ll = torch.reduce_sum(ll, axis=[1, 2])
+        ll = torch.nn.CrossEntropyLoss(reduce=None)(logits, y)
+        ll = torch.sum(ll, axis=[1, 2])
         pr = torch.square((v - self.mu_prior) / self.sig_prior)
-        pr = 0.5 * tf.reduce_sum(pr, axis=1)
+        pr = 0.5 * torch.sum(pr, axis=1)
         return pr + ll
 
     def __call__(self, v):
