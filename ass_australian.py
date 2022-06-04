@@ -56,17 +56,17 @@ def main():
       energy_fun = energy_u4
       score_fun = score_u4_anneal
     elif args.target == 'australian':
-      energy_fn = Australian(batch_size=32)
-      dim = energy_fn.dim
+      energy_fun = Australian(batch_size=args.batch_size)
+      dim = energy_fun.dim
 
       def australian_score(x):
-        return torch.autograd.grad(energy_fn(x).sum(), x, create_graph=True)[0]
+        return torch.autograd.grad(energy_fun(x).sum(), x, create_graph=True)[0]
 
       def score_fun(x, lam=1):
         x.requires_grad_(True)
         return lam*australian_score(x) + (1-lam)*score_gauss(x,0,1)
 
-      args.batch_size = 32
+      # args.batch_size = 32
 
 
     layers = []
@@ -199,7 +199,7 @@ def main():
     plt.clf()
     plt.close()
 
-    x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
+    x = G(prior.sample_n(args.batch_size,dim).cuda()).detach().cpu().numpy()
     plt.figure(figsize=(5, 5))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
     plt.xlim(-3, 3)
@@ -219,7 +219,7 @@ def main():
     plt.clf()
     plt.close()
 
-    x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), args.mc_steps).cpu().numpy()
+    x = mc_sampler.sample(torch.randn(args.batch_size,dim).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
