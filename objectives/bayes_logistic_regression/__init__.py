@@ -24,8 +24,8 @@ class BayesianLogisticRegression(Energy):
         self.sig_prior = torch.ones([self.dim]) * scale
 
 
-        self.data = torch.from_numpy(data)
-        self.labels = torch.from_numpy(labels)
+        self.data = torch.from_numpy(data).to(torch.float32)
+        self.labels = torch.from_numpy(labels).to(torch.float32)
         self.z = torch.zeros(batch_size, self.dim)
 
         if batch_size:
@@ -45,7 +45,7 @@ class BayesianLogisticRegression(Energy):
     def energy_fn(self, v, x, y):
         w, b = self._vector_to_model(v)
         logits = torch.matmul(x, w) + b
-        ll = torch.nn.CrossEntropyLoss(reduce=None)(logits, y)
+        ll = torch.nn.BCEWithLogitsLoss(reduction='none')(logits, y)
         ll = torch.sum(ll, axis=[1, 2])
         pr = torch.square((v - self.mu_prior) / self.sig_prior)
         pr = 0.5 * torch.sum(pr, axis=1)
