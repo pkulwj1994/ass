@@ -4,6 +4,7 @@ import torch.nn as nn
 from utils import DenseNet, HMCSampler
 from energy_lib import energy_2gauss, score_2gauss_anneal, energy_u1, score_u1_anneal, energy_u2, score_u2_anneal, energy_u3, score_u3_anneal, energy_u4, score_u4_anneal
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import argparse
 import os
 
@@ -36,12 +37,12 @@ def main():
 
     layers = []
     for i in range(1):
-        layers.append(DenseNet([2, 128,128,128, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        layers.append(DenseNet([2, 800,800,800, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     G = nn.Sequential(*layers).cuda()
 
     Dlayers = []
     for i in range(1):
-        Dlayers.append(DenseNet([2,128,128,128,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        Dlayers.append(DenseNet([2,800,800,800,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     D = nn.Sequential(*Dlayers).cuda()
 
 
@@ -161,8 +162,7 @@ def main():
         if iiter%args.viz_freq == 0:
           x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
           plt.figure(figsize=(5, 5))
-          plt.title('iter: {}'.format(iiter))
-          plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+          plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
           plt.xlim(-3, 3)
           plt.ylim(-3, 3)
           plt.savefig(os.path.join(args.save, 'samples_{}.png'.format(iiter)))
@@ -185,8 +185,7 @@ def main():
 
     x = G(prior.sample_n(args.viz_batchsize).cuda()).detach().cpu().numpy()
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iiter))
-    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'samples_no_mc.png'))
@@ -197,8 +196,7 @@ def main():
     x = mc_sampler.sample(torch.from_numpy(x).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iiter))
-    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'samples_with_mc.png'))
@@ -208,8 +206,7 @@ def main():
     x = mc_sampler.sample(torch.randn(args.viz_batchsize,2).cuda(), args.mc_steps).cpu().numpy()
 
     plt.figure(figsize=(5, 5))
-    plt.title('iter: {}'.format(iiter))
-    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+    plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
     plt.xlim(-3, 3)
     plt.ylim(-3, 3)
     plt.savefig(os.path.join(args.save, 'hmc_sample.png'))
@@ -223,8 +220,7 @@ def main():
         x = x.cpu().numpy()
 
         plt.figure(figsize=(5, 5))
-        plt.title('iter: {}'.format(iiter))
-        plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.jet)
+        plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
         plt.xlim(-3, 3)
         plt.ylim(-3, 3)
         plt.savefig(os.path.join(args.save, 'real_sample.png'))
