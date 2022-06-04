@@ -37,12 +37,12 @@ def main():
 
     layers = []
     for i in range(1):
-        layers.append(DenseNet([2, 800,800,800, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        layers.append(DenseNet([2, 256,256,256, 2], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     G = nn.Sequential(*layers).cuda()
 
     Dlayers = []
     for i in range(1):
-        Dlayers.append(DenseNet([2,800,800,800,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
+        Dlayers.append(DenseNet([2,256,256,256,1], activation=torch.nn.LeakyReLU(0.2), weight_scale=1.0, bias_scale=0.0))
     D = nn.Sequential(*Dlayers).cuda()
 
 
