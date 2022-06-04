@@ -16,8 +16,8 @@ class BayesianLogisticRegression(Energy):
         :param scale: std of the Normal prior
         """
         super(BayesianLogisticRegression, self).__init__()
-        self.x_dim = data.shape[1]
-        self.y_dim = labels.shape[1]
+        self.x_dim = int(data.shape[1])
+        self.y_dim = int(labels.shape[1])
         self.dim = self.x_dim * self.y_dim + self.y_dim
 
         self.mu_prior = torch.ones([self.dim]) * loc
@@ -29,24 +29,12 @@ class BayesianLogisticRegression(Energy):
         self.z = torch.zeros(batch_size, self.dim)
 
         if batch_size:
-            self.data = torch.tile(
-                torch.reshape(self.data, [1, -1, self.x_dim]),
-                torch.stack([batch_size, 1, 1])
-            )
-            self.labels = torch.tile(
-                torch.reshape(self.labels, [1, -1, self.y_dim]),
-                torch.stack([batch_size, 1, 1])
-            )
+            self.data = (self.data).view(1, -1, self.x_dim).tile((batch_size, 1, 1))
+            self.labels = (self.labels).view(1, -1, self.y_dim).tile((batch_size, 1, 1))
         else:
-            self.data = torch.tile(
-                torch.reshape(self.data, [1, -1, self.x_dim]),
-                torch.stack([torch.shape(self.z)[0], 1, 1])
-            )
-            self.labels = tf.tile(
-                torch.reshape(self.labels, [1, -1, self.y_dim]),
-                torch.stack([torch.shape(self.z)[0], 1, 1])
-            )
-
+            self.data = (self.data).view(1, -1, self.x_dim).tile((self.z.shape[0], 1, 1))
+            self.labels = (self.labels).view(1, -1, self.y_dim).tile((self.z.shape[0], 1, 1))
+            
     def _vector_to_model(self, v):
         w = v[:, :-self.y_dim]
         b = v[:, -self.y_dim:]
@@ -56,7 +44,7 @@ class BayesianLogisticRegression(Energy):
 
     def energy_fn(self, v, x, y):
         w, b = self._vector_to_model(v)
-        logits = tf.matmul(x, w) + b
+        logits = torch.matmul(x, w) + b
         ll = torch.nn.CrossEntropyLoss(reduce=None)(logits, y)
         ll = torch.sum(ll, axis=[1, 2])
         pr = torch.square((v - self.mu_prior) / self.sig_prior)
