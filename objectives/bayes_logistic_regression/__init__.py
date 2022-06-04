@@ -26,6 +26,7 @@ class BayesianLogisticRegression(Energy):
 
         self.data = torch.from_numpy(data)
         self.labels = torch.from_numpy(labels)
+        self.z = torch.zeros(batch_size, self.dim)
 
         if batch_size:
             self.data = torch.tile(
