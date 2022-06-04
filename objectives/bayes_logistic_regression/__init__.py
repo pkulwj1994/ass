@@ -20,12 +20,12 @@ class BayesianLogisticRegression(Energy):
         self.y_dim = int(labels.shape[1])
         self.dim = self.x_dim * self.y_dim + self.y_dim
 
-        self.mu_prior = torch.ones([self.dim]) * loc
-        self.sig_prior = torch.ones([self.dim]) * scale
+        self.mu_prior = torch.ones([self.dim]).cuda() * loc
+        self.sig_prior = torch.ones([self.dim]).cuda() * scale
 
 
-        self.data = torch.from_numpy(data).to(torch.float32)
-        self.labels = torch.from_numpy(labels).to(torch.float32)
+        self.data = torch.from_numpy(data).to(torch.float32).cuda()
+        self.labels = torch.from_numpy(labels).to(torch.float32).cuda()
         self.z = torch.zeros(batch_size, self.dim)
 
         if batch_size:
