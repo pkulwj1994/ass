@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--target',
-        choices=['gauss2', 'gauss8', 'u1', 'u2', 'u3', 'u4', 'australian'],
+        choices=['gauss2', 'gauss8', 'u1', 'u2', 'u3', 'u4', 'australian', 'german', 'heart'],
         type=str, default='gauss2'
     )
     parser.add_argument('--niters', type=int, default=5001)
