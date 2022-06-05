@@ -4,6 +4,8 @@ import torch.nn as nn
 from utils import DenseNet, HMCSampler, MMD
 from energy_lib import score_gauss, energy_2gauss, score_2gauss_anneal, energy_u1, score_u1_anneal, energy_u2, score_u2_anneal, energy_u3, score_u3_anneal, energy_u4, score_u4_anneal
 from objectives.bayes_logistic_regression.australian import Australian
+from objectives.bayes_logistic_regression.german import German
+from objectives.bayes_logistic_regression.heart import Heart
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -22,7 +24,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=5000)
     parser.add_argument('--test_batch_size', type=int, default=1000)
     parser.add_argument('--Dlr', type=float, default=1e-3)
-    parser.add_argument('--Glr', type=float, default=5e-6)
+    parser.add_argument('--Glr', type=float, default=1e-3)
     parser.add_argument('--save', type=str, default='save')
     parser.add_argument('--train_with', type=str, default="dsm", choices=['dsm', 'sm', 'ssm'])
     parser.add_argument('--anneal_pattern', type=str, default="anneal", choices=['anneal', 'no_anneal'])
@@ -57,6 +59,28 @@ def main():
       score_fun = score_u4_anneal
     elif args.target == 'australian':
       energy_fun = Australian(batch_size=args.batch_size)
+      dim = energy_fun.dim
+
+      def australian_score(x):
+        return torch.autograd.grad(energy_fun(x).sum(), x, create_graph=True)[0]
+
+      def score_fun(x, lam=1):
+        x.requires_grad_(True)
+        return lam*australian_score(x) + (1-lam)*score_gauss(x,0,1)
+
+    elif args.target == 'german':
+      energy_fun = German(batch_size=args.batch_size)
+      dim = energy_fun.dim
+
+      def australian_score(x):
+        return torch.autograd.grad(energy_fun(x).sum(), x, create_graph=True)[0]
+
+      def score_fun(x, lam=1):
+        x.requires_grad_(True)
+        return lam*australian_score(x) + (1-lam)*score_gauss(x,0,1)
+
+    elif args.target == 'heart':
+      energy_fun = Heart(batch_size=args.batch_size)
       dim = energy_fun.dim
 
       def australian_score(x):
@@ -200,7 +224,7 @@ def main():
     plt.close()
 
 
-    mc_sampler = HMCSampler(f=lambda x: -energy_fun(x),s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
+    mc_sampler = HMCSampler(f=lambda x: energy_fun(x),s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
 
     x = mc_sampler.sample(torch.randn(args.viz_batchsize,dim).cuda(), 100).cpu().numpy()
     x_hmc = torch.from_numpy(x)
