@@ -25,7 +25,7 @@ def main():
     parser.add_argument('--anneal_pattern', type=str, default="anneal", choices=['anneal', 'no_anneal'])
 
     parser.add_argument('--viz_freq', type=int, default=1000)
-    parser.add_argument('--viz_batchsize', type=int, default=50000)
+    parser.add_argument('--viz_batchsize', type=int, default=5000)
     parser.add_argument('--D_iters', type=int, default=5)
     parser.add_argument('--mc_steps', type=int, default=5)
     args = parser.parse_args()
@@ -221,7 +221,7 @@ def main():
     plt.clf()
     plt.close()
 
-    print('hmc-ass: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
+    print('hmc-ass: {}'.format(MMD(x_hmc.cuda(),torch.from_numpy(x).cuda())))
 
     x = mc_sampler.sample(torch.from_numpy(x).cuda(), args.mc_steps).cpu().numpy()
 
@@ -233,7 +233,7 @@ def main():
     plt.clf()
     plt.close()
 
-    print('hmc-assmc: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
+    print('hmc-assmc: {}'.format(MMD(x_hmc.cuda(),torch.from_numpy(x).cuda())))
 
 
     # try:
