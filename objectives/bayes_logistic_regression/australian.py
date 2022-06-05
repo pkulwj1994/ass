@@ -1,5 +1,5 @@
 import numpy as np
-from a_nice_mc.objectives.bayes_logistic_regression import BayesianLogisticRegression
+from objectives.bayes_logistic_regression import BayesianLogisticRegression
 
 
 class Australian(BayesianLogisticRegression):
