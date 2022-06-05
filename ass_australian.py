@@ -200,11 +200,13 @@ def main():
     plt.close()
 
 
-    print(dim)
     mc_sampler = HMCSampler(f=lambda x: -energy_fun(x),s=score_fun, dim=dim, eps=0.1, n_steps=5, device='cuda')
 
     x = mc_sampler.sample(torch.randn(args.viz_batchsize,dim).cuda(), 100).cpu().numpy()
     x_hmc = torch.from_numpy(x)
+
+    print(x.shape)
+
 
     plt.figure(figsize=(5, 5))
     plt.hist2d(x[:,0], x[:,1],range=[[-3.0, 3.0], [-3.0, 3.0]], bins=int(np.sqrt(args.viz_batchsize)), cmap=plt.cm.plasma,norm=mpl.colors.LogNorm())
@@ -223,7 +225,7 @@ def main():
     plt.clf()
     plt.close()
 
-    print('hmc-ass: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
+    print('hmc-ass: {}'.format(MMD(x_hmc.cuda(),torch.from_numpy(x).cuda())))
 
     x = mc_sampler.sample(torch.from_numpy(x).cuda(), args.mc_steps).cpu().numpy()
 
@@ -235,7 +237,7 @@ def main():
     plt.clf()
     plt.close()
 
-    print('hmc-assmc: {}'.format(MMD(x_hmc,torch.from_numpy(x))))
+    print('hmc-assmc: {}'.format(MMD(x_hmc.cuda(),torch.from_numpy(x).cuda())))
 
 
 if __name__ == "__main__":
