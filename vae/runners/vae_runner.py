@@ -275,7 +275,7 @@ class VAERunner():
                             # else:
                             #     return 0
 
-                if (step + 1) % 10000 == 0:
+                if (step + 1) % 1000 == 0:
                     if self.config.training.algo == 'vae':
                         states = [
                             encoder.state_dict(),
@@ -306,7 +306,7 @@ class VAERunner():
                             opt_score.state_dict()
                         ]
                     torch.save(states,
-                               os.path.join(self.args.log, 'checkpoint_{}0k.pth'.format((step + 1) // 10000)))
+                               os.path.join(self.args.log, 'checkpoint_{}k.pth'.format((step + 1) // 1000)))
                     torch.save(states, os.path.join(self.args.log, 'checkpoint.pth'))
 
                 step += 1

@@ -17,7 +17,7 @@ def parse_args_and_config():
     parser.add_argument('--runner', type=str, required=True, help='The runner to execute')
     parser.add_argument('--config', type=str, required=True, help='Path to the config file')
     parser.add_argument('--seed', type=int, default=1234, help='Random seed')
-    parser.add_argument('--run', type=str, default='../vae_run', help='Path for saving running related data.')
+    parser.add_argument('--run', type=str, default='../../ass_vae_run', help='Path for saving running related data.')
     parser.add_argument('--doc', type=str, default='0', help='A string for documentation purpose')
     parser.add_argument('--comment', type=str, default='', help='A string for experiment comment')
     parser.add_argument('--verbose', type=str, default='info', help='Verbose level: info | debug | warning | critical')
@@ -30,8 +30,8 @@ def parse_args_and_config():
     #ass parameters
     parser.add_argument('--train_with', type=str, default="ssm", choices=['sm', 'dsm', 'ssm'])
     parser.add_argument('--anneal_pattern', type=str, default="no_anneal", choices=['anneal', 'no_anneal'])
-    parser.add_argument('--encoder_iters', type=int, default=5)
-    parser.add_argument('--score_iters', type=int, default=5)
+    parser.add_argument('--encoder_iters', type=int, default=1)
+    parser.add_argument('--score_iters', type=int, default=1)
     parser.add_argument('--mc_steps', type=int, default=5)
 
     args = parser.parse_args()

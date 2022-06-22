@@ -21,5 +21,5 @@ optim:
   optimizer: "RMSProp"
   # lr: 0.001
   decoder_lr: 0.0001
-  encoder_lr: 0.0001
+  encoder_lr: 0.001
   score_lr: 0.001

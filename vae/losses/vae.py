@@ -105,7 +105,9 @@ def elbo_ass(imp_encoder, opt_encoder, decoder, score, score_opt, X, args, type=
 
             X_ = X_.view(X.shape[0], -1)
             samples = torch.cat([X_, z_], dim=-1)
-            coeff = torch.autograd.grad(torch.norm(score(samples) - torch.cat([score_x,score_z], dim=-1)), z_, create_graph=False)[0].clone().detach()
+            # coeff = torch.autograd.grad(torch.norm(score(samples) - torch.cat([score_x,score_z], dim=-1)), z_, create_graph=False)[0].clone().detach()
+            score_fun = score(samples)
+            coeff = torch.autograd.grad(z.shape[1] * torch.norm(score_fun[:, :X_.shape[1]] - score_x) + X_.shape[1] * torch.norm(score_fun[:, X_.shape[1]:] - score_z), z_, create_graph=False)[0].clone().detach()
             encoder_loss = (coeff*z).sum(-1).mean()
             opt_encoder.zero_grad()
             encoder_loss.backward()
