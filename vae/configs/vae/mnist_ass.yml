@@ -1,0 +1,25 @@
+training:
+  batch_size: 128
+  n_epochs: 3000
+  n_iters: 100000
+  algo: "ass"
+
+data:
+  dataset: "MNIST"
+  image_size: 28
+  channels: 1
+
+model:
+  z_dim: 32
+  eps_dim: 32
+  nef: 16
+  ndf: 16
+  n_particles: 1
+
+optim:
+  weight_decay: 0.000
+  optimizer: "RMSProp"
+  # lr: 0.001
+  decoder_lr: 0.0001
+  encoder_lr: 0.0001
+  score_lr: 0.001
