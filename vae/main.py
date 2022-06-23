@@ -31,7 +31,7 @@ def parse_args_and_config():
     parser.add_argument('--train_with', type=str, default="ssm", choices=['sm', 'dsm', 'ssm'])
     parser.add_argument('--anneal_pattern', type=str, default="no_anneal", choices=['anneal', 'no_anneal'])
     parser.add_argument('--encoder_iters', type=int, default=1)
-    parser.add_argument('--score_iters', type=int, default=1)
+    parser.add_argument('--score_iters', type=int, default=5)
     parser.add_argument('--mc_steps', type=int, default=5)
 
     args = parser.parse_args()
